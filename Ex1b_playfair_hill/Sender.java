@@ -1,5 +1,5 @@
-// Client.java - sender
-//playfair
+//client
+
 import java.io.*;
 import java.net.*;
 import java.util.Scanner;
@@ -7,15 +7,18 @@ import java.util.Scanner;
 public class Sender {
     private char[][] matrix;
 
+    // Constructor: builds 5x5 Playfair matrix from key
     public Sender(String key) {
         buildMatrix(key.toUpperCase().replace('J', 'I'));
     }
 
+    // Step 1: Build Playfair matrix (5x5)
     private void buildMatrix(String key) {
         boolean[] used = new boolean[26];
         matrix = new char[5][5];
         int idx = 0;
 
+        // Insert key letters first (no duplicates)
         for (char c : key.toCharArray()) {
             if (c >= 'A' && c <= 'Z' && !used[c - 'A']) {
                 used[c - 'A'] = true;
@@ -24,6 +27,7 @@ public class Sender {
             }
         }
 
+        // Fill remaining letters (excluding J)
         for (char c = 'A'; c <= 'Z'; c++) {
             if (c == 'J') continue;
             if (!used[c - 'A']) {
@@ -33,28 +37,35 @@ public class Sender {
         }
     }
 
+    // Step 2: Preprocess plaintext
     private String preprocess(String text) {
         StringBuilder clean = new StringBuilder();
+
+        // Remove non-letters + convert J→I
         for (char c : text.toUpperCase().toCharArray()) {
             if (c >= 'A' && c <= 'Z') {
                 clean.append(c == 'J' ? 'I' : c);
             }
         }
-    
+
         StringBuilder result = new StringBuilder();
         int i = 0;
+
         while (i < clean.length()) {
-            char a = clean.charAt(i);
+            char a = clean.charAt(i); /////
+
+            // If last character → add filler X
             if (i == clean.length() - 1) {
-                // Last character, odd length
                 result.append(a).append('X');
                 break;
             }
-            char b = clean.charAt(i + 1);
+
+            char b = clean.charAt(i + 1); //////
+
+            // If both letters same → insert X between them
             if (a == b) {
-                // Same letter: use 'X' as filler, and do NOT consume b yet
                 result.append(a).append('X');
-                i++; // move only by 1, so b is reused as first letter next time
+                i++; // move only one step //////
             } else {
                 result.append(a).append(b);
                 i += 2;
@@ -62,21 +73,8 @@ public class Sender {
         }
         return result.toString();
     }
-    private String insertFillers(String s) {
-        StringBuilder res = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            res.append(c);
-            if (i + 1 < s.length() && s.charAt(i + 1) == c) {
-                res.append('X');
-            }
-        }
-        if (res.length() % 2 == 1) {
-            res.append('X');
-        }
-        return res.toString();
-    }
 
+    // Find position of character in matrix
     private int[] find(char c) {
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 5; j++) {
@@ -85,26 +83,33 @@ public class Sender {
                 }
             }
         }
-        return new int[]{-1, -1};
+        return new int[]{-1, -1}; ///new int[]
     }
 
+    // Step 3: Encrypt using Playfair rules
     public String encrypt(String plain) {
         String clean = preprocess(plain);
         StringBuilder cipher = new StringBuilder();
 
-        for (int i = 0; i < clean.length(); i += 2) {
+        for (int i = 0; i < clean.length(); i += 2) { //2
             char a = clean.charAt(i);
             char b = clean.charAt(i + 1);
+
             int[] posA = find(a);
             int[] posB = find(b);
 
+            // Rule 1: Same row → shift right
             if (posA[0] == posB[0]) {
                 cipher.append(matrix[posA[0]][(posA[1] + 1) % 5])
                       .append(matrix[posB[0]][(posB[1] + 1) % 5]);
-            } else if (posA[1] == posB[1]) {
+            }
+            // Rule 2: Same column → shift down
+            else if (posA[1] == posB[1]) {
                 cipher.append(matrix[(posA[0] + 1) % 5][posA[1]])
                       .append(matrix[(posB[0] + 1) % 5][posB[1]]);
-            } else {
+            }
+            // Rule 3: Rectangle → swap columns
+            else {
                 cipher.append(matrix[posA[0]][posB[1]])
                       .append(matrix[posB[0]][posA[1]]);
             }
@@ -112,7 +117,7 @@ public class Sender {
         return cipher.toString();
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException{
         Scanner sc = new Scanner(System.in);
 
         System.out.print("Enter key: ");
@@ -126,18 +131,16 @@ public class Sender {
 
         System.out.println("Ciphertext: " + ciphertext);
 
-        try (Socket socket = new Socket("localhost", 5000);
-             ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream())) {
+        Socket socket = new Socket("localhost", 5000);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            out.writeObject(key);
-            out.writeObject(ciphertext);
-            out.flush();
+        // Send data line-by-line
+        out.println(key);
+        out.println(ciphertext);
 
-            System.out.println("Sent to server.");
+        System.out.println("Sent to server.");
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        sc.close();
+        out.close();
+        socket.close();
     }
 }

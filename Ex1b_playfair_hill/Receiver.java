@@ -1,4 +1,4 @@
-// Server.java - receiver
+//server
 import java.io.*;
 import java.net.*;
 
@@ -42,65 +42,78 @@ public class Receiver {
         return new int[]{-1, -1};
     }
 
+    // Decryption logic (reverse of encryption)
     public String decrypt(String cipher) {
         StringBuilder plain = new StringBuilder();
+
         for (int i = 0; i < cipher.length(); i += 2) {
             char a = cipher.charAt(i);
             char b = cipher.charAt(i + 1);
+
             int[] posA = find(a);
             int[] posB = find(b);
 
+            // Same row → shift left
             if (posA[0] == posB[0]) {
                 plain.append(matrix[posA[0]][(posA[1] - 1 + 5) % 5])
                      .append(matrix[posB[0]][(posB[1] - 1 + 5) % 5]);
-            } else if (posA[1] == posB[1]) {
+            }
+            // Same column → shift up
+            else if (posA[1] == posB[1]) {
                 plain.append(matrix[(posA[0] - 1 + 5) % 5][posA[1]])
                      .append(matrix[(posB[0] - 1 + 5) % 5][posB[1]]);
-            } else {
+            }
+            // Rectangle → swap columns
+            else {
                 plain.append(matrix[posA[0]][posB[1]])
                      .append(matrix[posB[0]][posA[1]]);
             }
         }
 
-        // Remove filler 'X' between identical letters or at end
+        // Remove filler 'X'
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < plain.length(); i++) {
             char c = plain.charAt(i);
+
             if (c == 'X') {
-                if (i > 0 && i < plain.length() - 1 && plain.charAt(i - 1) == plain.charAt(i + 1))
+                // Remove filler between duplicate letters
+                if (i > 0 && i < plain.length() - 1 &&
+                    plain.charAt(i - 1) == plain.charAt(i + 1)) {
                     continue;
-                if (i == plain.length() - 1)
-                    continue;
+                }
+                // Remove trailing X
+                if (i == plain.length() - 1) continue;
             }
             result.append(c);
         }
         return result.toString();
     }
 
-    public static void main(String[] args) {
-        final int PORT = 5000;
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server ready on port " + PORT);
+    public static void main(String[] args) throws IOException {
 
-            try (Socket clientSocket = serverSocket.accept();
-                 ObjectInputStream in = new ObjectInputStream(clientSocket.getInputStream())) {
+        ServerSocket ss = new ServerSocket(5000);
+        System.out.println("Server ready...");
 
-                String key = (String) in.readObject();
-                String ciphertext = (String) in.readObject();
+        Socket s = ss.accept();
+        BufferedReader in = new BufferedReader(
+            new InputStreamReader(s.getInputStream())
+        );
 
-                System.out.println("Received key: " + key);
-                System.out.println("Received ciphertext: " + ciphertext);
+        // Read line-by-line
+        String key = in.readLine();
+        String ciphertext = in.readLine();
 
-                Receiver r = new Receiver(key);
-                String decrypted = r.decrypt(ciphertext);
+        System.out.println("Received key: " + key);
+        System.out.println("Received ciphertext: " + ciphertext);
 
-                System.out.println("Decrypted plaintext: " + decrypted);
+        Receiver r = new Receiver(key);
+        String decrypted = r.decrypt(ciphertext);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        System.out.println("Decrypted text: " + decrypted);
+
+        // Manually close resources
+        in.close();
+        s.close();
+        ss.close();
     }
 }

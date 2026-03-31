@@ -3,15 +3,12 @@
 import java.net.*;
 import java.io.*;
 import java.util.*;
-
 public class rowcol_server_receiver {
 
     public static void main(String[] args) throws Exception {
 
-        int port = 5000;
-
         System.out.println("Server started...");
-        ServerSocket serverSocket = new ServerSocket(port);
+        ServerSocket serverSocket = new ServerSocket(5000);
 
         Socket socket = serverSocket.accept();
         System.out.println("Client connected.");
@@ -30,7 +27,7 @@ public class rowcol_server_receiver {
 
         for (int i = 0; i < col; i++) {
             key[i] = Integer.parseInt(keyStr[i]);
-        }
+        } //key array
 
         int len = ct.length();
         int row = len / col;

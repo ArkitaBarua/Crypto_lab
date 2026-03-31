@@ -5,12 +5,9 @@ import java.util.*;
 
 public class rail_client_sender {
         public static void main(String[] args) throws Exception{
-            String serverAddress = "127.0.0.1"; // Hostname or IP of the server
-            int port = 5000;
    
-            Socket socket = new Socket(serverAddress, port);
+            Socket socket = new Socket("localhost", 5000);
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             Scanner s = new Scanner(System.in);
   
             System.out.println("Connected to the server.");
@@ -46,15 +43,16 @@ public class rail_client_sender {
            // Now we can create the cipher
             StringBuilder CT = new StringBuilder();
             for (int i = 0; i < depth; i++)
-            for (int j = 0; j < pt.length(); j++)
-            if (railMatrix[i][j] != '\n')
-            CT.append(railMatrix[i][j]);
+              for (int j = 0; j < pt.length(); j++)
+                if (railMatrix[i][j] != '\n')
+                  CT.append(railMatrix[i][j]);
             String ct=CT.toString();
 
 
 
             System.out.println("depth: "+depth+"\nplain text: "+pt + "\ncipher text:"+ct);
-            out.println(depth+","+ct);
+            out.println(depth);
+            out.println(ct);
 
             s.close();
             socket.close();

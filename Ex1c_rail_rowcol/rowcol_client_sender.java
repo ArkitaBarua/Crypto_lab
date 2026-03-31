@@ -16,7 +16,7 @@ public class rowcol_client_sender {
         System.out.println("Connected to server.");
 
         System.out.print("Enter Plain Text: ");
-        String pt = sc.nextLine().replaceAll("\\s+", "");
+        String pt = sc.nextLine().replaceAll("\\s+", ""); ////////clean, only letters
 
         System.out.print("Enter Key (space separated numbers like 4 3 1 2 5 6 7): ");
         String keyLine = sc.nextLine();
@@ -27,10 +27,10 @@ public class rowcol_client_sender {
 
         for (int i = 0; i < col; i++) {
             key[i] = Integer.parseInt(keyStr[i]);
-        }
+        } /////key as array
 
         int len = pt.length();
-        int row = (int) Math.ceil((double) len / col);
+        int row = (int) Math.ceil((double) len / col); //number of rows? len/keylen
 
         char[][] matrix = new char[row][col];
 
