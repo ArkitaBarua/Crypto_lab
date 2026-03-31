@@ -3,11 +3,8 @@ import java.net.*;
 import java.util.*;
 
 public class Receiver_prac_play {
-    char[][] matrix;
-    public Receiver_prac_play(String key){
-        buildmatrix(key.toUpperCase().replace('J','I'));
-    }
-    public void buildmatrix(String key){
+    static char[][] matrix;
+    public static void buildmatrix(String key){
         matrix= new char[5][5];
         int idx=0;
         boolean[] used=new boolean[26];
@@ -29,7 +26,7 @@ public class Receiver_prac_play {
         }
 
     }
-    public int[] find(char c){
+    public static int[] find(char c){
         for(int i=0;i<5;i++){
             for (int j=0;j<5;j++){
                 if(matrix[i][j]==c){
@@ -40,7 +37,7 @@ public class Receiver_prac_play {
 
         return new int[]{-1,-1};
     }
-    public String decrypt(String ct){
+    public static String decrypt(String ct){
         StringBuilder pt= new StringBuilder();
         int i=0;
         while(i<ct.length()){
@@ -70,15 +67,35 @@ public class Receiver_prac_play {
 
         return pt.toString();
     }
+    public static String postprocess(String pt){
+    StringBuilder res = new StringBuilder();
+
+    for(int i=0;i<pt.length();i++){
+        if(i>0 && i<pt.length()-1 &&
+           pt.charAt(i)=='X' &&
+           pt.charAt(i-1)==pt.charAt(i+1)){
+            continue;
+        }
+        res.append(pt.charAt(i));
+    }
+
+    // remove trailing X
+    if(res.length()>0 && res.charAt(res.length()-1)=='X'){
+        res.deleteCharAt(res.length()-1);
+    }
+
+    return res.toString();
+}
     public static void main(String args[]) throws IOException{
         ServerSocket ss = new ServerSocket(5000);
         Socket s= ss.accept();
         BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
         String key= in.readLine();
         String ct = in.readLine();
-        Receiver_prac_play rec= new Receiver_prac_play(key);
+        buildmatrix(key.toUpperCase().replace('J','I'));
         System.out.println(ct);
-        String pt = rec.decrypt(ct);
+        String pt = decrypt(ct);
+        pt=postprocess(pt);
         System.out.println(pt);
     }
 }

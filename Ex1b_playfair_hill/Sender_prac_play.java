@@ -3,11 +3,8 @@ import java.net.*;
 import java.util.*;
 
 public class Sender_prac_play {
-    char[][] matrix;
-    public Sender_prac_play(String key){
-        buildmatrix(key.toUpperCase().replace('J','I'));
-    }
-    public void buildmatrix(String key){
+    static char[][] matrix;
+    public static void buildmatrix(String key){
         matrix= new char[5][5];
         int idx=0;
         boolean[] used=new boolean[26];
@@ -29,7 +26,7 @@ public class Sender_prac_play {
         }
 
     }
-    public String preprocess(String pt){
+    public static String preprocess(String pt){
         StringBuilder clean= new StringBuilder();
         pt=pt.toUpperCase().replace('J','I');
         for(char c:pt.toCharArray()){
@@ -58,7 +55,7 @@ public class Sender_prac_play {
         }
         return res.toString();
     }
-    public int[] find(char c){
+    public static int[] find(char c){
         for(int i=0;i<5;i++){
             for (int j=0;j<5;j++){
                 if(matrix[i][j]==c){
@@ -69,7 +66,7 @@ public class Sender_prac_play {
 
         return new int[]{-1,-1};
     }
-    public String encrypt(String plain){
+    public static String encrypt(String plain){
         String clean=preprocess(plain);
         StringBuilder ct= new StringBuilder();
         int i=0;
@@ -109,8 +106,8 @@ public class Sender_prac_play {
         Socket s = new Socket("localhost",5000);
         PrintWriter out = new PrintWriter(s.getOutputStream(),true);
         out.println(key);
-        Sender_prac_play send= new Sender_prac_play(key);
-        String ct = send.encrypt(pt);
+        buildmatrix(key);
+        String ct = encrypt(pt);
         System.out.println(ct);
         out.println(ct);
     }

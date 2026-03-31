@@ -70,14 +70,14 @@ public class Receiver {
             }
         }
 
-        // Remove filler 'X'
+        // Remove filler 'X' //////IMP
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < plain.length(); i++) {
             char c = plain.charAt(i);
 
             if (c == 'X') {
                 // Remove filler between duplicate letters
-                if (i > 0 && i < plain.length() - 1 &&
+                if (i > 0 && i < plain.length() - 1 && ////check i boundary
                     plain.charAt(i - 1) == plain.charAt(i + 1)) {
                     continue;
                 }

@@ -66,7 +66,7 @@ public class sdes_client_sender {
 
         // Round 1
         String r1 = fk(ip, k1);
-        System.out.println("Round1: " + r1);
+        System.out.println("Round1: " + r1); //print r1 switch se pehle
 
         // Swap
         r1 = r1.substring(4) + r1.substring(0,4);
@@ -119,15 +119,15 @@ public class sdes_client_sender {
         String s1 = sBox(xor.substring(4), S1);
 
         String p4 = permute(s0+s1, P4);
-        String result = xor(left, p4) + right;
+        String result = xor(left, p4) + right; /////////
 
         return result;
     }
 
-    static String sBox(String input, int[][] box) {
+    static String sBox(String input, int[][] box) { //////////
         int row = Integer.parseInt("" + input.charAt(0) + input.charAt(3),2);
         int col = Integer.parseInt("" + input.charAt(1) + input.charAt(2),2);
         int val = box[row][col];
-        return String.format("%2s", Integer.toBinaryString(val)).replace(' ','0');
+        return String.format("%2s", Integer.toBinaryString(val)).replace(' ','0'); //////
     }
 }
