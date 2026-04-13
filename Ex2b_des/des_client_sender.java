@@ -83,6 +83,7 @@ public class des_client_sender {
     };
 
     // ---------- BIT HELPERS ----------
+    // Generic permutation
     static long permute(long v, int[] table, int inBits, int outBits) {
         long r = 0;
         for (int i = 0; i < outBits; i++) {
@@ -91,27 +92,36 @@ public class des_client_sender {
         }
         return r;
     }
+
+    // Left rotate 28-bit key half
     static long rotl28(long x, int n) {
         return ((x << n) | (x >> (28 - n))) & 0x0FFFFFFFL;
     }
+
+    // Generate 16 subkeys
     static long[] makeSubkeys(long key64) {
         long k56 = permute(key64, PC1, 64, 56);
         long c = (k56 >>> 28) & 0x0FFFFFFFL;
         long d = k56 & 0x0FFFFFFFL;
+
         int[] shifts = {1,1,2,2,2,2,2,2,1,2,2,2,2,2,2,1};
         long[] ks = new long[16];
+
         for (int i = 0; i < 16; i++) {
             c = rotl28(c, shifts[i]);
             d = rotl28(d, shifts[i]);
-            long cd = (c << 28) | d;
+            long cd = (c << 28) | d; ///
             ks[i] = permute(cd, PC2, 56, 48);
         }
         return ks;
     }
+
+    // Feistel function
     static long feistel(long r32, long k48) {
         long e48 = permute(r32, E, 32, 48);
         long x = e48 ^ k48;
         long out = 0;
+
         for (int i = 0; i < 8; i++) {
             int six = (int)((x >> (42 - 6*i)) & 0x3F);
             int row = ((six >> 5) << 1) | (six & 1);
@@ -121,37 +131,40 @@ public class des_client_sender {
         }
         return permute(out, P, 32, 32);
     }
+
+    // Encrypt one block
     static long desEncryptBlock(long block64, long[] ks, StringBuilder dbg) {
         long ip = permute(block64, IP, 64, 64);
-        dbg.append("IP: ").append(String.format("%016X", ip)).append("\n");
+
         long L = (ip >>> 32) & 0xFFFFFFFFL;
         long R = ip & 0xFFFFFFFFL;
+
         for (int i = 0; i < 16; i++) {
             long f = feistel(R, ks[i]);
             long nL = R;
             long nR = L ^ f;
             L = nL; R = nR;
-            dbg.append("Round ").append(i+1).append(": ")
-               .append(String.format("%016X", (L<<32) | R)).append("\n");
         }
+
         long pre = (R << 32) | L; // swap
-        long fp = permute(pre, FP, 64, 64);
-        dbg.append("FP: ").append(String.format("%016X", fp)).append("\n\n");
-        return fp;
+        return permute(pre, FP, 64, 64);
     }
+
+    // Convert string → 64-bit
     static long pack8(String s) {
         byte[] b = s.getBytes(StandardCharsets.UTF_8);
         long v = 0;
-        for (int i = 0; i < 8; i++) {
-            long c = (i < b.length) ? (b[i] & 0xFFL) : 0x20; // pad with space
+        for (int i = 0; i < 8; i++) { //8 bit at a time (1 byte)
+            long c = (i < b.length) ? (b[i] & 0xFFL) : 0x20; //padding
             v = (v << 8) | c;
         }
         return v;
     }
 
-    // ---------- MAIN (CLIENT) ----------
     public static void main(String[] args) throws Exception {
+
         Socket sock = new Socket("localhost", 5000);
+
         BufferedReader kb = new BufferedReader(new InputStreamReader(System.in));
         PrintWriter out = new PrintWriter(sock.getOutputStream(), true);
 
@@ -160,34 +173,25 @@ public class des_client_sender {
 
         System.out.print("Key (8 chars): ");
         String key = kb.readLine();
-        if (key.length() != 8) {
-            System.out.println("Key must be exactly 8 characters.");
-            sock.close();
-            return;
-        }
 
-        long key64 = pack8(key);
+        if (key.length() != 8) return;
+
+        long key64 = pack8(key); ///////
         long[] ks = makeSubkeys(key64);
 
-        byte[] data = msg.getBytes(StandardCharsets.UTF_8);
-        int blocks = (data.length + 7) / 8;
+        int blocks = (msg.length() + 7) / 8;
 
-        StringBuilder allDbg = new StringBuilder();
         StringBuilder ctHex = new StringBuilder();
 
         for (int i = 0; i < blocks; i++) {
             String chunk = msg.substring(i*8, Math.min(msg.length(), (i+1)*8));
             long block = pack8(chunk);
-            StringBuilder dbg = new StringBuilder();
-            long enc = desEncryptBlock(block, ks, dbg);
-            allDbg.append("BLOCK ").append(i+1).append(":\n").append(dbg);
+            long enc = desEncryptBlock(block, ks, new StringBuilder());
             ctHex.append(String.format("%016X", enc));
         }
 
-        System.out.println("\nIntermediate Results:\n" + allDbg);
         System.out.println("CipherText: " + ctHex);
 
-        // send cipher + key (hex)
         out.println(ctHex.toString());
         out.println(String.format("%016X", key64));
 

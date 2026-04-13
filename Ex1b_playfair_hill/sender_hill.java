@@ -27,21 +27,24 @@ public class sender_hill {
         Socket s = new Socket("localhost", 8000);
         PrintWriter out = new PrintWriter(s.getOutputStream(), true);
 
-        String ct = "";
+        StringBuilder ct = new StringBuilder();
 
+        // P × K
         for (int i = 0; i < pt.length(); i += n) {
-            for (int r = 0; r < n; r++) {
+            for (int c = 0; c < n; c++) {   // column of K
                 int sum = 0;
-                for (int c = 0; c < n; c++)
-                    sum += key[r][c] * (pt.charAt(i + c) - 'A');
-                ct += (char) ((sum % 26) + 'A');
+                for (int r = 0; r < n; r++) { // row of P
+                    sum += (pt.charAt(i + r) - 'A') * key[r][c];
+                }
+                ct.append((char) ((sum % 26) + 'A'));
             }
         }
 
         System.out.println("Cipher Text (CT): " + ct);
 
         out.println(n);
-        out.println(ct);
+        out.println(ct.toString());
+
         for (int i = 0; i < n; i++) {
             for (int j = 0; j < n; j++)
                 out.print(key[i][j] + " ");

@@ -4,7 +4,6 @@ public class md5 {
 
     /* ---------- Shift amounts ---------- */
     // Predefined rotation values used in each of the 64 steps
-    // These ensure proper bit mixing (diffusion property)
     private static final int[] SHIFT = {
         7,12,17,22, 7,12,17,22, 7,12,17,22, 7,12,17,22,
         5,9,14,20, 5,9,14,20, 5,9,14,20, 5,9,14,20,
@@ -14,7 +13,6 @@ public class md5 {
 
     /* ---------- Constants ---------- */
     // T[i] = floor(2^32 × abs(sin(i+1)))
-    // These constants remove any bias and make the algorithm deterministic
     private static final int[] T = new int[64];
 
     static {
@@ -30,22 +28,18 @@ public class md5 {
         System.out.print("Enter Input: ");
         String input = sc.nextLine();
 
-        // Display input size (useful for understanding padding)
         System.out.println("Number of characters in input: " + input.length());
 
         // Convert input string → byte array
         byte[] msg = input.getBytes();
-        int originalLength = msg.length;
+        int originalLength = msg.length; //(length in bytes)
 
         // Length of message in bits (needed at end of padding)
         long bitLength = (long) originalLength * 8;
 
         /* ---------- Padding ---------- */
-        // MD5 requires message length ≡ 448 mod 512 (i.e., 56 bytes mod 64)
-        int padLen = (56 - (originalLength + 1) % 64 + 64) % 64;
-
-        // New array = original + 1 byte (0x80) + padding + 8 bytes (length)
-        byte[] padded = new byte[originalLength + 1 + padLen + 8];
+        int padLen = (56 - (originalLength + 1) % 64 + 64) % 64;  ///512 bits
+        byte[] padded = new byte[originalLength + 1 + padLen + 8]; /////
 
         // Copy original message into padded array
         System.arraycopy(msg, 0, padded, 0, originalLength);
@@ -55,7 +49,7 @@ public class md5 {
 
         // Append original length in bits (little-endian format)
         for (int i = 0; i < 8; i++) {
-            padded[padded.length - 8 + i] = (byte)(bitLength >>> (8 * i));
+            padded[padded.length - 8 + i] = (byte)(bitLength >>> (8 * i)); ///////bit
         }
 
         /* ---------- Initial Values ---------- */
@@ -126,14 +120,14 @@ public class md5 {
                 int sum = a + g + T[i] + X[k];
 
                 // Left rotate and add to b (main mixing step)
-                b = b + Integer.rotateLeft(sum, SHIFT[i]);
+                b = b + Integer.rotateLeft(sum, SHIFT[i]); //////
 
                 // Update a
                 a = temp;
 
                 /* ---- Print at end of each round ---- */
                 if (i == 15) {
-                    System.out.printf("Round 1:\nA=%08x B=%08x C=%08x D=%08x\n", a,b,c,d);
+                    System.out.printf("Round 1:\nA=%08x B=%08x C=%08x D=%08x\n", a,b,c,d); ///08
                 }
                 if (i == 31) {
                     System.out.printf("Round 2:\nA=%08x B=%08x C=%08x D=%08x\n", a,b,c,d);

@@ -57,33 +57,103 @@ public class aes_client_sender {
         };
         private static final int[] RCON = {0x00,0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,0x1B,0x36};
 
-        private static String bytesToHex(byte[] b) { StringBuilder sb=new StringBuilder(); for(byte x:b) sb.append(String.format("%02X", x&0xFF)); return sb.toString(); }
-        private static String stateToHex(byte[][] s) { StringBuilder sb=new StringBuilder(); for(int r=0;r<4;r++){ for(int c=0;c<4;c++) sb.append(String.format("%02X", s[r][c]&0xFF)); if(r<3) sb.append(' ');} return sb.toString(); }
-        private static byte[][] bytesToState(byte[] in){ byte[][] s=new byte[4][4]; for(int i=0;i<16;i++) s[i%4][i/4]=in[i]; return s; }
+        private static String bytesToHex(byte[] b) { StringBuilder sb=new StringBuilder(); 
+            for(byte x:b) sb.append(String.format("%02X", x&0xFF)); 
+            return sb.toString(); 
+        }
+        private static String stateToHex(byte[][] s) { 
+            StringBuilder sb=new StringBuilder(); 
+            for(int r=0;r<4;r++){ 
+                for(int c=0;c<4;c++) 
+                    sb.append(String.format("%02X", s[r][c]&0xFF)); 
+                if(r<3) sb.append(' ');
+            } 
+            return sb.toString(); 
+        }
+        private static byte[][] bytesToState(byte[] in){ 
+            byte[][] s=new byte[4][4]; 
+            for(int i=0;i<16;i++) 
+                s[i%4][i/4]=in[i]; 
+            return s; 
+        }
         private static byte[] stateToBytes(byte[][] state){ byte[] out=new byte[16]; for(int i=0;i<16;i++) out[i]=state[i%4][i/4]; return out; }
 
-        private static int mul(int a,int b){ int res=0; int aa=a&0xFF, bb=b&0xFF; for(int i=0;i<8;i++){ if((bb&1)!=0) res^=aa; boolean hi=(aa&0x80)!=0; aa=(aa<<1)&0xFF; if(hi) aa^=0x1B; bb>>>=1; } return res; }
+        private static int mul(int a,int b){ 
+            int res=0; 
+            int aa=a&0xFF, bb=b&0xFF; 
+            for(int i=0;i<8;i++){ 
+                if((bb&1)!=0) res^=aa; 
+                boolean hi=(aa&0x80)!=0; 
+                aa=(aa<<1)&0xFF; 
+                if(hi) aa^=0x1B; 
+                bb>>>=1; 
+            } 
+            return res; 
+        }
 
-        private static void subBytes(byte[][] s){ for(int r=0;r<4;r++) for(int c=0;c<4;c++) s[r][c]=(byte)SBOX[s[r][c]&0xFF]; }
-        private static void shiftRows(byte[][] s){ for(int r=1;r<4;r++){ byte[] tmp=new byte[4]; for(int c=0;c<4;c++) tmp[c]=s[r][(c+r)%4]; for(int c=0;c<4;c++) s[r][c]=tmp[c]; } }
-        private static void mixColumns(byte[][] s){ for(int c=0;c<4;c++){ int a0=s[0][c]&0xFF,a1=s[1][c]&0xFF,a2=s[2][c]&0xFF,a3=s[3][c]&0xFF; int r0=mul(0x02,a0)^mul(0x03,a1)^a2^a3; int r1=a0^mul(0x02,a1)^mul(0x03,a2)^a3; int r2=a0^a1^mul(0x02,a2)^mul(0x03,a3); int r3=mul(0x03,a0)^a1^a2^mul(0x02,a3); s[0][c]=(byte)r0; s[1][c]=(byte)r1; s[2][c]=(byte)r2; s[3][c]=(byte)r3; } }
-        private static void addRoundKey(byte[][] s, byte[] rk){ for(int c=0;c<4;c++) for(int r=0;r<4;r++) s[r][c]=(byte)((s[r][c]&0xFF)^(rk[c*4+r]&0xFF)); }
+        private static void subBytes(byte[][] s){ 
+            for(int r=0;r<4;r++) 
+                for(int c=0;c<4;c++) 
+                    s[r][c]=(byte)SBOX[s[r][c]&0xFF]; 
+        }
+        private static void shiftRows(byte[][] s){ 
+            for(int r=1;r<4;r++){ 
+                byte[] tmp=new byte[4]; 
+                for(int c=0;c<4;c++) tmp[c]=s[r][(c+r)%4]; 
+                for(int c=0;c<4;c++) s[r][c]=tmp[c]; 
+            } 
+        }
+        private static void mixColumns(byte[][] s){ 
+            for(int c=0;c<4;c++){ 
+                int a0=s[0][c]&0xFF,  a1=s[1][c]&0xFF,  a2=s[2][c]&0xFF,  a3=s[3][c]&0xFF; 
+                int r0=mul(0x02,a0)^mul(0x03,a1)^a2^a3; 
+                int r1=a0^mul(0x02,a1)^mul(0x03,a2)^a3; 
+                int r2=a0^a1^mul(0x02,a2)^mul(0x03,a3); 
+                int r3=mul(0x03,a0)^a1^a2^mul(0x02,a3); 
+
+                s[0][c]=(byte)r0; 
+                s[1][c]=(byte)r1; 
+                s[2][c]=(byte)r2; 
+                s[3][c]=(byte)r3; 
+            } 
+        }
+        private static void addRoundKey(byte[][] s, byte[] rk){ 
+            for(int c=0;c<4;c++) 
+                for(int r=0;r<4;r++) 
+                    s[r][c]=(byte)((s[r][c]&0xFF)^(rk[c*4+r]&0xFF)); 
+        }
 
         private static byte[] expandKey(byte[] key){
-            byte[] expanded=new byte[16*(Nr+1)]; System.arraycopy(key,0,expanded,0,16);
-            int bytesGenerated=16; int rconIter=1; byte[] temp=new byte[4];
+            byte[] expanded=new byte[16*(Nr+1)]; 
+            System.arraycopy(key,0,expanded,0,16);
+            int bytesGenerated=16; 
+            int rconIter=1; 
+            byte[] temp=new byte[4];
             while(bytesGenerated<expanded.length){
-                for(int i=0;i<4;i++) temp[i]=expanded[bytesGenerated-4+i];
+                for(int i=0;i<4;i++) 
+                    temp[i]=expanded[bytesGenerated-4+i];
                 if(bytesGenerated%16==0){
-                    byte t=temp[0]; temp[0]=temp[1]; temp[1]=temp[2]; temp[2]=temp[3]; temp[3]=t;
-                    for(int i=0;i<4;i++) temp[i]=(byte)SBOX[temp[i]&0xFF];
-                    temp[0]=(byte)((temp[0]&0xFF)^RCON[rconIter]); rconIter++;
+                    byte t=temp[0]; 
+                    temp[0]=temp[1]; 
+                    temp[1]=temp[2]; 
+                    temp[2]=temp[3]; 
+                    temp[3]=t;
+                    for(int i=0;i<4;i++) 
+                        temp[i]=(byte)SBOX[temp[i]&0xFF];
+                    temp[0]=(byte)((temp[0]&0xFF)^RCON[rconIter]); 
+                    rconIter++;
                 }
-                for(int i=0;i<4;i++){ expanded[bytesGenerated]=(byte)((expanded[bytesGenerated-16]&0xFF)^(temp[i]&0xFF)); bytesGenerated++; }
+                for(int i=0;i<4;i++){ 
+                    expanded[bytesGenerated]=(byte)((expanded[bytesGenerated-16]&0xFF)^(temp[i]&0xFF)); 
+                    bytesGenerated++; 
+                }
             }
             return expanded;
         }
-        private static byte[] getRoundKey(byte[] expanded,int round){ byte[] rk=new byte[16]; System.arraycopy(expanded,round*16,rk,0,16); return rk; }
+        private static byte[] getRoundKey(byte[] expanded,int round){ 
+            byte[] rk=new byte[16]; 
+            System.arraycopy(expanded,round*16,rk,0,16); 
+            return rk; }
 
         private static byte[] encryptBlock(byte[] in, byte[] expandedKey, int blockIndex){
             byte[][] state = bytesToState(in);
@@ -113,7 +183,7 @@ public class aes_client_sender {
             System.out.println("\nFinal Ciphertext (hex): " + bytesToHex(out));
             return out;
         }
-
+ 
         private static byte[] parseKeyInput(String keyInput){ byte[] kb = keyInput.getBytes(StandardCharsets.UTF_8); if(kb.length==16) return kb; if(kb.length<16){ byte[] p=new byte[16]; System.arraycopy(kb,0,p,0,kb.length); return p; } return Arrays.copyOf(kb,16); }
 
         public static String encryptToString(String plaintextStr, String keyStr){

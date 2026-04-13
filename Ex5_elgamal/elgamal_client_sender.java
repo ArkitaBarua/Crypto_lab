@@ -30,7 +30,7 @@ public class elgamal_client_sender {
         // IMPORTANT: message must be less than q
         Scanner sc = new Scanner(System.in);
         System.out.print("Enter message (integer < q): ");
-        BigInteger m = new BigInteger(sc.nextLine());
+        BigInteger m = new BigInteger(sc.nextLine()); /////////
 
         // ===== Step 3: Generate random ephemeral key k =====
         // This value must be random for every encryption
@@ -39,7 +39,7 @@ public class elgamal_client_sender {
         BigInteger k;
         do {
             // Generate random number of size similar to q
-            k = new BigInteger(q.bitLength(), rand);
+            k = new BigInteger(q.bitLength(), rand); ///bitLengthhh
 
             // Ensure: 1 ≤ k < q
         } while (k.compareTo(BigInteger.ZERO) <= 0 || k.compareTo(q) >= 0); ///similar (k <= 0 || k >= q);

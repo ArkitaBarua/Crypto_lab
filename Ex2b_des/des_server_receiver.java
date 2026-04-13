@@ -1,7 +1,7 @@
 
 import java.io.*;
 import java.net.*;
-
+ 
 public class des_server_receiver {
 
     // ---------- DES TABLES ----------
@@ -43,6 +43,7 @@ public class des_server_receiver {
 
     static final int[][][] S = des_client_sender.S; 
 
+    // Permutation
     static long permute(long v, int[] table, int inBits, int outBits) {
         long r = 0;
         for (int i = 0; i < outBits; i++) {
@@ -52,10 +53,12 @@ public class des_server_receiver {
         return r;
     }
 
+    // Rotate
     static long rotl28(long x, int n) {
         return ((x << n) | (x >> (28 - n))) & 0x0FFFFFFFL;
     }
 
+    // Generate subkeys
     static long[] generateSubKeys(long key64) {
         long k56 = permute(key64, PC1, 64, 56);
         long c = (k56 >> 28) & 0x0FFFFFFFL;
@@ -73,6 +76,7 @@ public class des_server_receiver {
         return keys;
     }
 
+    // Feistel
     static long feistel(long r, long k) {
         long e48 = permute(r, E, 32, 48);
         long x = e48 ^ k;
@@ -88,28 +92,23 @@ public class des_server_receiver {
         return permute(out, P, 32, 32);
     }
 
+    // Decryption (reverse key order)
     static long decryptBlock(long block, long[] keys, StringBuilder dbg) {
+
         long ip = permute(block, IP, 64, 64);
-        dbg.append("IP: ").append(Long.toHexString(ip).toUpperCase()).append("\n");
 
         long l = (ip >> 32) & 0xFFFFFFFFL;
         long r = ip & 0xFFFFFFFFL;
 
         for (int i = 0; i < 16; i++) {
-            long f = feistel(r, keys[15 - i]); // reverse keys
+            long f = feistel(r, keys[15 - i]); // reverse
             long nl = r;
             long nr = l ^ f;
             l = nl; r = nr;
-
-            dbg.append("Round ").append(i+1).append(": ")
-               .append(Long.toHexString((l<<32)|r).toUpperCase()).append("\n");
         }
 
         long pre = (r << 32) | l;
-        long fp = permute(pre, FP, 64, 64);
-        dbg.append("FP: ").append(Long.toHexString(fp).toUpperCase()).append("\n\n");
-
-        return fp;
+        return permute(pre, FP, 64, 64);
     }
 
     static long hexToLong(String h) {
@@ -119,7 +118,6 @@ public class des_server_receiver {
     public static void main(String[] args) throws Exception {
 
         ServerSocket ss = new ServerSocket(5000);
-        System.out.println("Waiting for sender...");
         Socket s = ss.accept();
 
         BufferedReader in = new BufferedReader(new InputStreamReader(s.getInputStream()));
@@ -130,28 +128,20 @@ public class des_server_receiver {
         long key64 = hexToLong(keyHex);
         long[] keys = generateSubKeys(key64);
 
-        System.out.println("Received Cipher Text: " + ctHex);
-
-        int blocks = ctHex.length() / 16;
         StringBuilder pt = new StringBuilder();
-        StringBuilder all = new StringBuilder();
 
-        for (int i = 0; i < blocks; i++) {
-            String blk = ctHex.substring(i*16, (i+1)*16);
+        for (int i = 0; i < ctHex.length(); i += 16) {
+            String blk = ctHex.substring(i, i+16);
             long block = hexToLong(blk);
 
-            StringBuilder dbg = new StringBuilder();
-            long dec = decryptBlock(block, keys, dbg);
-
-            all.append("BLOCK ").append(i+1).append(":\n").append(dbg);
+            long dec = decryptBlock(block, keys, new StringBuilder());
 
             for (int j = 0; j < 8; j++) {
                 pt.append((char)((dec >> (56 - 8*j)) & 0xFF));
             }
         }
 
-        System.out.println("\nIntermediate Results:\n" + all);
-        System.out.println("Text after decryption: " + pt.toString());
+        System.out.println("Decrypted Text: " + pt);
 
         s.close();
         ss.close();

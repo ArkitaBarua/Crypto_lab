@@ -4,7 +4,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Scanner;
-
+ 
 public class aes_server_receiver {
     public static void main(String[] args) {
         int port = 5000;
