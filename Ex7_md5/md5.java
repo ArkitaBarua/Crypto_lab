@@ -1,5 +1,8 @@
 import java.util.Scanner;
 
+
+
+
 public class md5 {
 
     /* ---------- Shift amounts ---------- */
@@ -15,7 +18,7 @@ public class md5 {
     // T[i] = floor(2^32 × abs(sin(i+1)))
     private static final int[] T = new int[64];
 
-    static {
+    static { //static
         for (int i = 0; i < 64; i++) {
             // Precompute constants using sine values
             T[i] = (int)((1L << 32) * Math.abs(Math.sin(i + 1)));
@@ -39,8 +42,7 @@ public class md5 {
 
         /* ---------- Padding ---------- */
         int padLen = (56 - (originalLength + 1) % 64 + 64) % 64;  ///512 bits
-        byte[] padded = new byte[originalLength + 1 + padLen + 8]; /////
-
+        byte[] padded = new byte[originalLength + 1 + padLen + 8]; /////8 , sha mai 16 bytes ka hota hai msg length
         // Copy original message into padded array
         System.arraycopy(msg, 0, padded, 0, originalLength);
 
@@ -49,7 +51,7 @@ public class md5 {
 
         // Append original length in bits (little-endian format)
         for (int i = 0; i < 8; i++) {
-            padded[padded.length - 8 + i] = (byte)(bitLength >>> (8 * i)); ///////bit
+            padded[padded.length - 8 + i] = (byte)(bitLength >>> (8 * i)); ///////bit -8+i ULTA
         }
 
         /* ---------- Initial Values ---------- */
@@ -71,11 +73,11 @@ public class md5 {
             int[] X = new int[16];
 
             for (int j = 0; j < 16; j++) {
-                int idx = block * 64 + j * 4;
+                int idx = block*64 + j*4; //128 and 8 in sha
 
                 // Convert 4 bytes → 1 integer (little-endian)
                 // & 0xff ensures unsigned byte handling
-                X[j] = ((padded[idx] & 0xff)) |
+                X[j] = ((padded[idx] & 0xff)) |   /////IMPPPPPPPPP 
                        ((padded[idx + 1] & 0xff) << 8) |
                        ((padded[idx + 2] & 0xff) << 16) |
                        ((padded[idx + 3] & 0xff) << 24);
@@ -85,26 +87,26 @@ public class md5 {
             int a = A, b = B, c = C, d = D;
 
             // Main loop: 64 steps (4 rounds × 16 operations)
-            for (int i = 0; i < 64; i++) {
+            for (int i = 0; i < 64; i++) { //64
 
                 int g, k;
 
-                // Round 1: uses AND, OR, NOT (basic nonlinear mixing)
+                // Round 1
                 if (i < 16) {
                     g = (b & c) | (~b & d);   // Function result
                     k = i;                   // Direct index
                 }
-                // Round 2: changes bit dependency pattern
+                // Round 2
                 else if (i < 32) {
                     g = (d & b) | (~d & c);
                     k = (5 * i + 1) % 16;
                 }
-                // Round 3: XOR-based mixing (strong diffusion)
+                // Round 3
                 else if (i < 48) {
                     g = b ^ c ^ d;
                     k = (3 * i + 5) % 16;
                 }
-                // Round 4: final nonlinear transformation
+                // Round 4
                 else {
                     g = c ^ (b | ~d);
                     k = (7 * i) % 16;
