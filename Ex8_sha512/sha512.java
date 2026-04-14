@@ -26,17 +26,20 @@ public class sha512 {
         0x4cc5d4becb3e42b6L,0x597f299cfc657e2aL,0x5fcb6fab3ad6faecL,0x6c44198c4a475817L
     };
 
+
+
+
     // ---------- Rotate functions ----------
     static long ROTR(long x, int n) {
         return (x >>> n) | (x << (64 - n));
     }
 
-    static long Ch(long x, long y, long z) {
-        return (x & y) ^ (~x & z);
+    static long Ch(long e, long f, long g) {
+        return (e & f) ^ (~e & g);
     }
 
-    static long Maj(long x, long y, long z) {
-        return (x & y) ^ (x & z) ^ (y & z);
+    static long Maj(long a, long b, long c) {
+        return (a & b) ^ (a & c) ^ (b & c);
     }
 
     static long Sigma0(long x) {
@@ -47,7 +50,7 @@ public class sha512 {
         return ROTR(x,14) ^ ROTR(x,18) ^ ROTR(x,41);
     }
 
-    static long sigma0(long x) {
+    static long sigma0(long x) { //small sigma used in W generation.
         return ROTR(x,1) ^ ROTR(x,8) ^ (x >>> 7);
     }
 
@@ -63,15 +66,15 @@ public class sha512 {
 
         System.out.println("No of characters in input: " + input.length());
 
-        byte[] msg = input.getBytes("UTF-8");
-        long bitLen = (long) msg.length * 8;
+        byte[] msg = input.getBytes("UTF-8"); //getBytes /////
+        long bitLen = (long) msg.length * 8; ////////*8 LONG
 
         // ---------- Padding ----------
         int padLen = (112 - (msg.length + 1) % 128 + 128) % 128;
-        byte[] padded = new byte[msg.length + 1 + padLen + 16];
+        byte[] padded = new byte[msg.length + 1 + padLen + 16]; //16--length field
 
         System.arraycopy(msg, 0, padded, 0, msg.length);
-        padded[msg.length] = (byte) 0x80;
+        padded[msg.length] = (byte) 0x80; //1000 0000
 
         for (int i = 0; i < 8; i++) {
             padded[padded.length - 1 - i] = (byte)(bitLen >>> (8 * i));
@@ -79,7 +82,7 @@ public class sha512 {
 
         // ---------- Initial Hash ----------
         long[] H = {
-            0x6a09e667f3bcc908L,0xbb67ae8584caa73bL,
+            0x6a09e667f3bcc908L,0xbb67ae8584caa73bL, //L
             0x3c6ef372fe94f82bL,0xa54ff53a5f1d36f1L,
             0x510e527fade682d1L,0x9b05688c2b3e6c1fL,
             0x1f83d9abfb41bd6bL,0x5be0cd19137e2179L
@@ -91,12 +94,12 @@ public class sha512 {
 
             System.out.println("\n============================================ Processing Block " + (b + 1) + " ============================================");
 
-            long[] W = new long[80];
+            long[] W = new long[80]; //80 rounds, each round 1 w
 
-            for (int i = 0; i < 16; i++) {
-                int idx = b * 128 + i * 8;
+            for (int i = 0; i < 16; i++) { //Load first 16 words
+                int idx = b*128 + i*8;
                 W[i] = 0;
-                for (int j = 0; j < 8; j++) {
+                for (int j = 0; j < 8; j++) { //8*8=64
                     W[i] = (W[i] << 8) | (padded[idx + j] & 0xff);
                 }
             }
@@ -104,8 +107,8 @@ public class sha512 {
             for (int i = 16; i < 80; i++) {
                 W[i] = sigma1(W[i-2]) + W[i-7] + sigma0(W[i-15]) + W[i-16];
             }
-
-            long a=H[0], b1=H[1], c=H[2], d=H[3];
+            //H is hash
+            long a=H[0], b1=H[1], c=H[2], d=H[3]; //b is blocks variable
             long e=H[4], f=H[5], g=H[6], h=H[7];
 
             // Print Header for the rounds
@@ -114,7 +117,7 @@ public class sha512 {
 
             for (int i = 0; i < 80; i++) {
 
-                long T1 = h + Sigma1(e) + Ch(e,f,g) + K[i] + W[i];
+                long T1 = h + Ch(e,f,g) + Sigma1(e) + W[i] + K[i] ; //long
                 long T2 = Sigma0(a) + Maj(a,b1,c);
 
                 h = g;
@@ -131,12 +134,13 @@ public class sha512 {
                                   i, a, b1, c, d, e, f, g, h);
             }
 
+            //after 80 rounds 
             H[0]+=a; H[1]+=b1; H[2]+=c; H[3]+=d;
             H[4]+=e; H[5]+=f; H[6]+=g; H[7]+=h;
         }
 
         System.out.print("\nFinal Hash Value: ");
-        for (long val : H) {
+        for (long val : H) { //H becomes hash value
             System.out.printf("%016x", val);
         }
         System.out.println();
