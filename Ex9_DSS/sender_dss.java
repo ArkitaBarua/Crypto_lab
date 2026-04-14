@@ -5,7 +5,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Scanner;
 
-public class sender_DSS {
+public class sender_dss {
 
     public static void main(String[] args) throws Exception {
 
