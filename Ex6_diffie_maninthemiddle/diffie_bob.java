@@ -2,23 +2,27 @@ import java.io.*;
 import java.math.BigInteger;
 import java.net.Socket;
 import java.security.SecureRandom;
-import java.util.Scanner;
 
 public class diffie_bob {
 
     public static void main(String[] args) throws Exception {
 
-        Scanner sc = new Scanner(System.in);
+        SecureRandom rand = new SecureRandom();
 
-        // ===== Public parameters =====
-        System.out.print("Enter prime number (p): ");
-        BigInteger p = new BigInteger(sc.nextLine());
+        // ===== Connect to attacker =====
+        Socket socket = new Socket("localhost", 6000);
 
-        System.out.print("Enter primitive root (g): ");
-        BigInteger g = new BigInteger(sc.nextLine());
+        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        // Receive p and g from attacker
+        BigInteger p = new BigInteger(in.readLine());
+        BigInteger g = new BigInteger(in.readLine());
+
+        System.out.println("Received p: " + p);
+        System.out.println("Received g: " + g);
 
         // ===== Generate private key =====
-        SecureRandom rand = new SecureRandom();
         BigInteger xb = new BigInteger(10, rand);
 
         // Compute public key
@@ -27,24 +31,17 @@ public class diffie_bob {
         System.out.println("\nBob Private Key: " + xb);
         System.out.println("Bob Public Key: " + YB);
 
-        // ===== Connect to attacker =====
-        Socket socket = new Socket("localhost", 6000);
-
-        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-        // Send Bob's public key
+        // Send public key
         out.println(YB.toString());
 
-        // Receive fake key (attacker pretending to be Alice)
+        // Receive fake key from attacker
         BigInteger fakeKey = new BigInteger(in.readLine());
+        System.out.println("Received fake key: " + fakeKey);
 
-        System.out.println("Public key received (from attacker): " + fakeKey);
-
-        // Compute shared key with attacker
+        // Compute shared key
         BigInteger KB = fakeKey.modPow(xb, p);
 
-        System.out.println("Common key between Bob and Attacker: " + KB);
+        System.out.println("Shared Key (Bob-Attacker): " + KB);
 
         socket.close();
     }

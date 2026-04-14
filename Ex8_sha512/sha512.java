@@ -77,7 +77,7 @@ public class sha512 {
         padded[msg.length] = (byte) 0x80; //1000 0000
 
         for (int i = 0; i < 8; i++) {
-            padded[padded.length - 1 - i] = (byte)(bitLen >>> (8 * i));
+            padded[padded.length - 1 - i] = (byte)(bitLen >>> (8 * i)); //-1-i
         }
 
         // ---------- Initial Hash ----------

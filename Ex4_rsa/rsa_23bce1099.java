@@ -24,8 +24,13 @@ public class rsa_23bce1099 {
                           .multiply(q.subtract(BigInteger.ONE));
 
         // Step 4: Choose public exponent e
-        // 65537 is commonly used because it is efficient and secure
-        BigInteger e = BigInteger.valueOf(65537);
+        BigInteger e;
+
+        do {
+            e = new BigInteger(16, random); // small random e
+        } while (!phi.gcd(e).equals(BigInteger.ONE) 
+                || e.compareTo(BigInteger.ONE) <= 0 
+                || e.compareTo(phi) >= 0);
 
         // Step 5: Compute private key d such that:
         // d ≡ e⁻¹ mod φ(n)
